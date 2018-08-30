@@ -1,4 +1,4 @@
-package router
+package service
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ type Query struct {
 	Offset int `json:"offset" form:"offset"`
 }
 
-type Router struct {
+type Service struct {
 	DB       *gorm.DB
 	SetError ErrorFunc
 }
@@ -44,22 +44,22 @@ type configs struct {
 type handlerInit func(*gorm.DB) interface{}
 type ErrorFunc func(*gin.Context)
 
-func NewRouter(dbConf []byte) (*Router, error) {
+func New(dbConf []byte) (*Service, error) {
 	var conf configs
 	err := json.Unmarshal(dbConf, &conf)
 	if err != nil {
-		return &Router{}, err
+		return &Service{}, err
 	}
 	curConf, err := getConfigByEnv(conf)
 	if err != nil {
-		return &Router{}, err
+		return &Service{}, err
 	}
-	return &Router{
+	return &Service{
 		DB: getDB(curConf.User, curConf.Password, curConf.Host, curConf.Port, curConf.DB, curConf.Type),
 	}, nil
 }
 
-func (r *Router) LoadRoutes(eng gin.IRoutes, routes []byte) {
+func (r *Service) LoadRoutes(eng gin.IRoutes, routes []byte) {
 	// Read the JSON of routes
 	var routeMap map[string]string
 	err := json.Unmarshal(routes, &routeMap)
@@ -91,11 +91,11 @@ func (r *Router) LoadRoutes(eng gin.IRoutes, routes []byte) {
 	}
 }
 
-func (r *Router) Close() {
+func (r *Service) Close() {
 	r.DB.Close()
 }
 
-func (r *Router) RouteToHandler(handlerAction string) gin.HandlerFunc {
+func (r *Service) RouteToHandler(handlerAction string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tx := r.DB.Begin()
 		callDetails := strings.Split(handlerAction, "#")
@@ -113,7 +113,7 @@ func (r *Router) RouteToHandler(handlerAction string) gin.HandlerFunc {
 	}
 }
 
-func (r *Router) callAction(action string, result reflect.Value, c *gin.Context, tx *gorm.DB) {
+func (r *Service) callAction(action string, result reflect.Value, c *gin.Context, tx *gorm.DB) {
 	e := result.Elem()
 	if e.IsValid() {
 		caller := e.MethodByName(action)
@@ -133,7 +133,7 @@ func (r *Router) callAction(action string, result reflect.Value, c *gin.Context,
 	r.NotFound(c, tx)
 }
 
-func (r *Router) NotFound(c *gin.Context, tx *gorm.DB) {
+func (r *Service) NotFound(c *gin.Context, tx *gorm.DB) {
 	tx.Rollback()
 	c.JSON(404, gin.H{"error": "Not found"})
 	return

@@ -56,49 +56,18 @@ func (by By) Sort(migrators []migrator) {
 	sort.Sort(mg)
 }
 
-func Migrate(dbConn *gorm.DB, version, mode string) error {
+func Migrate(dbConn *gorm.DB, version, mode string, migratorObject interface{}) error {
 	if dbConn != nil {
-		dbConn.AutoMigrate(&models.Subscriber{})
-		dbConn.AutoMigrate(&models.Intent{})
-		dbConn.AutoMigrate(&models.Track{})
-		dbConn.AutoMigrate(&models.Ingest{})
-		dbConn.AutoMigrate(&models.Template{})
-		dbConn.AutoMigrate(&models.Event{})
-		dbConn.AutoMigrate(&models.User{})
-		dbConn.AutoMigrate(&models.IngestEgress{})
-		dbConn.AutoMigrate(&models.IngestInstance{})
-		dbConn.AutoMigrate(&models.EgressTrack{})
-		dbConn.AutoMigrate(&models.Migration{})
-		runMigrations(dbConn, version, mode)
+		runMigrations(dbConn, version, mode, migratorObject)
 		return nil
 	}
 	return errors.New("DB Connection not initialized, call Init before Migrate")
 }
 
-func GenerateMigrations(name string) {
-	var tpl bytes.Buffer
-	ts := time.Now().UTC().Format("20060102150405")
-	funcName := struct {
-		Name string
-	}{strings.Title(name) + "_" + ts}
-
-	tmpl := template.Must(template.ParseFiles("db/template.txt"))
-	err := tmpl.Execute(&tpl, funcName)
-	f, err := os.OpenFile("db/migrations.go", os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	if _, err = f.WriteString(tpl.String()); err != nil {
-		return
-	}
-	fmt.Println("Generated func in db/migrations.go")
-}
-
-func runMigrations(dbConn *gorm.DB, version, mode string) {
+func runMigrations(dbConn *gorm.DB, version, mode string, migratorObject interface{}) {
 	var versions []string
 	list := make([]migrator, 0)
-	migratorType := reflect.TypeOf(migrator{})
+	migratorType := reflect.TypeOf(migratorObject)
 	for i := 0; i < migratorType.NumMethod(); i++ {
 		method := migratorType.Method(i)
 		name := method.Name
@@ -141,7 +110,7 @@ func runMigrations(dbConn *gorm.DB, version, mode string) {
 	}
 }
 
-func update_migrations(dbConn *gorm.DB, mode string) {
+func UpdateMigrations(dbConn *gorm.DB, mode string) {
 	fpcs := make([]uintptr, 1)
 	_ = runtime.Callers(2, fpcs)
 	fun := runtime.FuncForPC(fpcs[0] - 1)

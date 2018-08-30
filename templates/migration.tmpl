@@ -1,6 +1,6 @@
 
-func (m migrator) {{.Name}}(mode string, dbConn *gorm.DB) {
-  defer update_migrations(dbConn,mode)
+func (m migrate) {{.Name}}(mode string, dbConn *gorm.DB) {
+  defer migrator.UpdateMigrations(dbConn,mode)
   switch mode {
     case "up":
     	// Write UP migration here.

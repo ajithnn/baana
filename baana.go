@@ -1,10 +1,10 @@
 package main
 
 import (
-	"./app"
-	"./generators"
 	"encoding/json"
 	"fmt"
+	"gitlab.com/ajithnn/baana/app"
+	"gitlab.com/ajithnn/baana/generators"
 	"io/ioutil"
 	"os"
 	"strings"

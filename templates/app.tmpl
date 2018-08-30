@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	//"github.com/amagimedia/baana"
-	"../baana"
 	"{{ .ImportPath }}/server"
-	"{{ .ImportPath }}/migrate"
+	"{{ .ImportPath }}/migrations"
+	"{{ .ImportPath }}/route"
+	bsvc "gitlab.com/ajithnn/baana/service"
 	"os"
 )
 
@@ -16,12 +16,33 @@ func main() {
 		os.Exit(1)
 	}
 
+	route.Init()
+
+  	routes, err := ioutil.ReadFile("config/routes.json")
+  	if err != nil {
+    		panic("Invalid route/ no routes.json  found.")
+    		os.Exit(1)
+  	}
+
+  	dbConf, err := ioutil.ReadFile("config/db.json")
+  	if err != nil {
+  		panic("Invalid db config / no db config found.")
+    		os.Exit(1)
+	}
+
+  	svc, err := bsvc.New(dbConf)
+  	if err != nil {
+    		panic(err)
+    		os.Exit(1)
+  	}
+
+
 	switch os.Args[1] {
 	case "migrate":
 		fmt.Println("Migrating...")
-		migrate.Migrate(os.Args[3], os.Args[2])
+		migrations.Migrate(svc.DB, os.Args[3], os.Args[2])
 	case "server":
-		server.Run()
+		server.Run(svc)
 	default:
 		fmt.Println("Unknown Mode , exiting")
 		os.Exit(1)

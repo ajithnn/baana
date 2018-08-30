@@ -1,11 +1,14 @@
 package generators
 
 import (
-	"../app"
+	"bytes"
 	"fmt"
 	"github.com/gobuffalo/packr"
+	"gitlab.com/ajithnn/baana/app"
 	"os"
+	"strings"
 	"text/template"
+	"time"
 )
 
 type routeMap struct {
@@ -13,9 +16,10 @@ type routeMap struct {
 	ImportPath     string
 }
 
+var box = packr.NewBox("../templates/")
+
 func Generate(curApp app.App) bool {
 	// Create <app_name>.go using the tempalte
-	box := packr.NewBox("../templates/")
 	t := template.Must(template.New("app").Parse(box.String("app.tmpl")))
 	f, err := os.OpenFile(fmt.Sprintf("%s/%s.go", curApp.Path, curApp.Name), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
@@ -64,7 +68,7 @@ func Generate(curApp app.App) bool {
 		return false
 	}
 	data := routeMap{
-		[]string{"Event", "Template"},
+		[]string{},
 		curApp.ImportPath,
 	}
 	e = rt.Execute(rf, &data)
@@ -72,5 +76,37 @@ func Generate(curApp app.App) bool {
 		fmt.Println("Error unable to create render template " + e.Error())
 		return false
 	}
+	// create migrations/migration.go
+	t = template.Must(template.New("base_migration").Parse(box.String("base_migration.tmpl")))
+	f, err = os.OpenFile(fmt.Sprintf("%s/migrations/migration.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		fmt.Println("Cannot open file , error: " + err.Error())
+		return false
+	}
+	err = t.Execute(f, &curApp)
+	if err != nil {
+		fmt.Println("Error unable to create render template " + err.Error())
+		return false
+	}
 	return true
+}
+
+func GenerateMigrations(name string) {
+	var tpl bytes.Buffer
+	ts := time.Now().UTC().Format("20060102150405")
+	funcName := struct {
+		Name string
+	}{strings.Title(name) + "_" + ts}
+
+	tmpl := template.Must(template.New("migration").Parse(box.String("migration.tmpl")))
+	err := tmpl.Execute(&tpl, funcName)
+	f, err := os.OpenFile("migrations/migration.go", os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	if _, err = f.WriteString(tpl.String()); err != nil {
+		return
+	}
+	fmt.Println("Generated func in migrations/migration.go")
 }

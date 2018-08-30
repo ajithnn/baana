@@ -20,42 +20,21 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	brouter "../baana/router"
-	"{{ .ImportPath }}/route"
+	bsvc "gitlab.com/ajithnn/baana/service"
 	"io/ioutil"
 	"os"
 )
 
-func Run() {
+func Run(svc *bsvc.Service) {
 
-  route.Init()
-
-  routes, err := ioutil.ReadFile("config/routes.json")
-  if err != nil {
-    panic("Invalid route/ no routes.json  found.")
-    os.Exit(1)
-  }
-
-  dbConf, err := ioutil.ReadFile("config/db.json")
-  if err != nil {
-    panic("Invalid db config / no db config found.")
-    os.Exit(1)
-  }
+  defer svc.Close()
 
   gin.SetMode(gin.ReleaseMode)
   gin.DefaultWriter = logger.GinLogger{}
   r := gin.Default()
 
   r.Static("/public", "./public")
-
-  router, err := brouter.NewRouter(dbConf)
-  if err != nil {
-    panic(err)
-  }
-  defer router.Close()
-
-  router.LoadRoutes(r, routes)
-
+  svc.LoadRoutes(r, routes)
   r.Run(":8080")
 
 }
