@@ -1,0 +1,61 @@
+// Package server {{ .Name }} API.
+//
+// the purpose of this application is to provide APIs for 
+//
+//
+//     Schemes: http, https
+//     Host: localhost
+//     BasePath: /v1/api
+//     Version: 0.0.1
+//     Contact: 
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+// swagger:meta
+package server
+
+import (
+	"github.com/gin-gonic/gin"
+	brouter "../baana/router"
+	"{{ .ImportPath }}/route"
+	"io/ioutil"
+	"os"
+)
+
+func Run() {
+
+  route.Init()
+
+  routes, err := ioutil.ReadFile("config/routes.json")
+  if err != nil {
+    panic("Invalid route/ no routes.json  found.")
+    os.Exit(1)
+  }
+
+  dbConf, err := ioutil.ReadFile("config/db.json")
+  if err != nil {
+    panic("Invalid db config / no db config found.")
+    os.Exit(1)
+  }
+
+  gin.SetMode(gin.ReleaseMode)
+  gin.DefaultWriter = logger.GinLogger{}
+  r := gin.Default()
+
+  r.Static("/public", "./public")
+
+  router, err := brouter.NewRouter(dbConf)
+  if err != nil {
+    panic(err)
+  }
+  defer router.Close()
+
+  router.LoadRoutes(r, routes)
+
+  r.Run(":8080")
+
+}

@@ -1,0 +1,29 @@
+package main
+
+import (
+	"fmt"
+	//"github.com/amagimedia/baana"
+	"../baana"
+	"{{ .ImportPath }}/server"
+	"{{ .ImportPath }}/migrate"
+	"os"
+)
+
+func main() {
+
+	if len(os.Args) < 2 {
+	fmt.Println("Usage: {{ .Name }} <Mode:('migrate'|'server')>; {{ .Name }} migrate <mode> <version>; {{ .Name }} server")
+		os.Exit(1)
+	}
+
+	switch os.Args[1] {
+	case "migrate":
+		fmt.Println("Migrating...")
+		migrate.Migrate(os.Args[3], os.Args[2])
+	case "server":
+		server.Run()
+	default:
+		fmt.Println("Unknown Mode , exiting")
+		os.Exit(1)
+	}
+}

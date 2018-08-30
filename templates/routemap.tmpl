@@ -1,0 +1,13 @@
+package route
+
+import (
+  "../baana/router"
+  "{{ .ImportPath}}/controllers"
+)
+
+func Init() {
+{{ range $index , $value := .ControllerList }}
+router.ControllerFunc["{{ $value }}"] = controllers.{{ $value }}
+{{ end }}
+}
+

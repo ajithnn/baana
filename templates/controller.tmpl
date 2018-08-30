@@ -1,0 +1,71 @@
+package controllers
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
+	"github.com/amagimedia/baana"
+)
+
+type {{ .Name }}Controller struct {
+	*models.{{ .Name }}
+	db *gorm.DB
+	*baana.Query
+}
+
+func {{ .Name }}(db *gorm.DB) baana.Controller {
+	handle := &{{ .Name }}Controller{&models.{{ .Name }}{}, db, &baana.Query{}}
+	return handle
+}
+
+// swagger:operation POST /{{ .Endpoint }} create{{ .Name }}
+//
+// Creates a new {{ .Name }} with the given parameters.
+//
+//
+// ---
+// produces:
+// - application/json
+// parameters:
+// responses:
+func (e *{{ .Name }}Controller) Create(c *gin.Context) {
+}
+
+// swagger:operation PUT /{{ .Endpoint }}/{id} update{{ .Name }}
+//
+// Update a {{ .Name }} with the given parameters.
+//
+//
+// ---
+// produces:
+// - application/json
+// parameters:
+// responses:
+func (e *{{ .Name }}Controller) Update(c *gin.Context) {
+}
+
+// swagger:operation GET /{{ .Endpoint }}/ get{{ .PluralName }}
+//
+// Get {{ .PluralName }} with the given query filters.
+//
+//
+// ---
+// produces:
+// - application/json
+// parameters:
+// responses:
+func (e *{{ .Name }}Controller) Read(c *gin.Context) {
+}
+
+// swagger:operation DELETE /{{ .Endpoint }}/{id} delete{{ .Name }}
+//
+// Delete {{ .PluralName }}  with the given query filter.
+//
+//
+// ---
+// produces:
+// - application/json
+// parameters:
+// responses:
+func (e *{{ .Name }}Controller) Delete(c *gin.Context) {
+}
+
