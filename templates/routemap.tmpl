@@ -1,9 +1,11 @@
 package route
 
+{{ if len(.ControllerList) > 0}}
 import (
   "gitlab.com/ajithnn/baana/service"
   "{{ .ImportPath}}/controllers"
 )
+{{ end }}
 
 func Init() {
 {{ range $index , $value := .ControllerList }}

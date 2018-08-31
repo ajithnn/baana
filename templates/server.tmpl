@@ -29,8 +29,14 @@ func Run(svc *bsvc.Service) {
 
   defer svc.Close()
 
+  routes, err := ioutil.ReadFile("config/routes.json")
+  if err != nil {
+    panic("Invalid route/ no routes.json  found.")
+    os.Exit(1)
+  }
+
   gin.SetMode(gin.ReleaseMode)
-  gin.DefaultWriter = logger.GinLogger{}
+
   r := gin.Default()
 
   r.Static("/public", "./public")

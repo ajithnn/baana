@@ -1,10 +1,10 @@
 package migrations
 
 import (
-	"encoding/json"
-	"{{ .ImportPath }}/models"
+	_ "{{ .ImportPath }}/models"
 	"github.com/jinzhu/gorm"
 	"gitlab.com/ajithnn/baana/migrator"
+	"fmt"
 )
 
 type migrate struct {}

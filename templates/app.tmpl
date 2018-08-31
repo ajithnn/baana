@@ -18,11 +18,6 @@ func main() {
 
 	route.Init()
 
-  	routes, err := ioutil.ReadFile("config/routes.json")
-  	if err != nil {
-    		panic("Invalid route/ no routes.json  found.")
-    		os.Exit(1)
-  	}
 
   	dbConf, err := ioutil.ReadFile("config/db.json")
   	if err != nil {
