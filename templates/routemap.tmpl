@@ -1,6 +1,6 @@
 package route
 
-{{ if len(.ControllerList) > 0}}
+{{ if gt (len .ControllerList) 0}}
 import (
   "gitlab.com/ajithnn/baana/service"
   "{{ .ImportPath}}/controllers"
