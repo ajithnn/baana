@@ -1,17 +1,14 @@
 package db
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/amagimedia/paalaka/models"
 	"github.com/jinzhu/gorm"
-	"os"
 	"reflect"
 	"runtime"
 	"sort"
 	"strings"
-	"text/template"
 	"time"
 )
 

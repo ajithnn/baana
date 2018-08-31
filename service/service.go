@@ -85,7 +85,7 @@ func (r *Service) LoadRoutes(eng gin.IRoutes, routes []byte) {
 		case "Any":
 			eng.Any(route, r.RouteToHandler(controllerAction))
 		default:
-			err = fmt.Sprintf("Invalid Method type - %s. Please use one of GET|POST|PUT|PATCH|DELETE|Any", method)
+			err = fmt.Errorf("Invalid Method type - %s. Please use one of GET|POST|PUT|PATCH|DELETE|Any", method)
 			panic(err)
 		}
 	}
@@ -99,8 +99,8 @@ func (r *Service) RouteToHandler(handlerAction string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tx := r.DB.Begin()
 		callDetails := strings.Split(handlerAction, "#")
-		if _, ok := mapping[callDetails[0]]; ok {
-			funcToCall := reflect.ValueOf(mapping[callDetails[0]])
+		if _, ok := ControllerFuncs[callDetails[0]]; ok {
+			funcToCall := reflect.ValueOf(ControllerFuncs[callDetails[0]])
 			in := make([]reflect.Value, 1)
 			in[0] = reflect.ValueOf(tx)
 			result := funcToCall.Call(in)
