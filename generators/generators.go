@@ -88,9 +88,10 @@ func Generate(curApp app.App) bool {
 		fmt.Println("Error unable to create render template " + err.Error())
 		return false
 	}
-	// create controllers/controllers.go
-	t = template.Must(template.New("base_controller").Parse(box.String("main_controller.tmpl")))
-	f, err = os.OpenFile(fmt.Sprintf("%s/controllers/controllers.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
+
+	// create models/migration.go
+	t = template.Must(template.New("model_migration").Parse(box.String("migrate_model.tmpl")))
+	f, err = os.OpenFile(fmt.Sprintf("%s/models/migration.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		fmt.Println("Cannot open file , error: " + err.Error())
 		return false
@@ -100,18 +101,7 @@ func Generate(curApp app.App) bool {
 		fmt.Println("Error unable to create render template " + err.Error())
 		return false
 	}
-	// create models/models.go
-	t = template.Must(template.New("base_model").Parse(box.String("main_model.tmpl")))
-	f, err = os.OpenFile(fmt.Sprintf("%s/models/models.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Cannot open file , error: " + err.Error())
-		return false
-	}
-	err = t.Execute(f, &curApp)
-	if err != nil {
-		fmt.Println("Error unable to create render template " + err.Error())
-		return false
-	}
+
 	return true
 }
 
