@@ -83,7 +83,7 @@ func runMigrations(dbConn *gorm.DB, version, mode string, migratorObject interfa
 		By(ByTimeRev).Sort(list)
 	}
 
-	caller := reflect.ValueOf(&migrator{}).Elem()
+	caller := reflect.ValueOf(migratorObject).Elem()
 	inputs := make([]reflect.Value, 2)
 	inputs[0] = reflect.ValueOf(mode)
 	inputs[1] = reflect.ValueOf(dbConn)
