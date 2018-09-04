@@ -2,9 +2,12 @@ package generators
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gobuffalo/packr"
+	"github.com/jinzhu/inflection"
 	"gitlab.com/ajithnn/baana/app"
+	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -14,6 +17,18 @@ import (
 type routeMap struct {
 	ControllerList []string
 	ImportPath     string
+}
+
+type Model struct {
+	Name      string
+	ShortDesc string
+	LongDesc  string
+}
+
+type Controller struct {
+	Name       string
+	PluralName string
+	Endpoint   string
 }
 
 var box = packr.NewBox("../templates/")
@@ -110,7 +125,7 @@ func GenerateMigrations(name string) {
 	ts := time.Now().UTC().Format("20060102150405")
 	funcName := struct {
 		Name string
-	}{strings.Title(name) + "_" + ts}
+	}{name + "_" + ts}
 
 	tmpl := template.Must(template.New("migration").Parse(box.String("migration.tmpl")))
 	err := tmpl.Execute(&tpl, funcName)
@@ -123,4 +138,115 @@ func GenerateMigrations(name string) {
 		return
 	}
 	fmt.Println("Generated func in migrations/migration.go")
+}
+
+func GenerateModels(curApp app.App, name string) {
+	var tpl bytes.Buffer
+	// Create Model file by passing the name
+	m := Model{
+		name,
+		fmt.Sprintf("%s denotes ", name),
+		fmt.Sprintf("%s is used for ", name),
+	}
+	tmpl := template.Must(template.New("model").Parse(box.String("model.tmpl")))
+	err := tmpl.Execute(&tpl, m)
+	f, err := os.OpenFile("models/"+strings.ToLower(name)+".go", os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(err)
+		return
+	}
+	defer f.Close()
+	if _, err = f.WriteString(tpl.String()); err != nil {
+		panic(err)
+		return
+	}
+	// Check if Controller file exists, If yes, skip.
+	// IF no, create controller file with name and app data.
+	GenerateControllers(curApp, name)
+	// Load routes.json file and add
+	// Create,Read,Update, Delete to routes.
+	GenerateRoutes(curApp, name)
+}
+
+func GenerateRoutes(curApp app.App, name string) {
+	fmt.Println("Generating Routes for " + name)
+	var curRoutes = make(map[string]string)
+	action := map[string]string{
+		"GET":    "Read",
+		"PUT":    "Update",
+		"POST":   "Create",
+		"DELETE": "Delete",
+	}
+	// Read routes.json to a map[string]string
+	c, err := ioutil.ReadFile("config/routes.json")
+	if err != nil {
+		fmt.Println("Error in reading routes.json, error: " + err.Error())
+		return
+	}
+	err = json.Unmarshal(c, &curRoutes)
+	if err != nil {
+		fmt.Println("Error in reading routes.json, error: " + err.Error())
+		return
+	}
+
+	paths := []string{
+		fmt.Sprintf("/%s/ POST", inflection.Plural(strings.ToLower(name))),
+		fmt.Sprintf("/%s/{id} PUT", inflection.Plural(strings.ToLower(name))),
+		fmt.Sprintf("/%s/*id GET", inflection.Plural(strings.ToLower(name))),
+		fmt.Sprintf("/%s/*id DELETE", inflection.Plural(strings.ToLower(name))),
+	}
+
+	// Add routes for create, read,update and delete
+	for _, p := range paths {
+		pm := strings.Split(p, " ")
+		curRoutes[fmt.Sprintf("%s#%s", pm[1], pm[0])] = fmt.Sprintf("%s#%s", name, action[pm[1]])
+	}
+
+	rjson, err := json.MarshalIndent(curRoutes, "", "  ")
+	err = ioutil.WriteFile("config/routes.json", rjson, 0755)
+	// Update routeMap template by reading unique controllers from routes.json
+	controllers := make(map[string]bool)
+	controllerNames := make([]string, 0)
+	for _, r := range curRoutes {
+		ca := strings.Split(r, "#")
+		controllers[ca[0]] = true
+	}
+	for names, _ := range controllers {
+		controllerNames = append(controllerNames, names)
+	}
+
+	data := routeMap{
+		controllerNames,
+		curApp.ImportPath,
+	}
+
+	rt := template.Must(template.New("route").Parse(box.String("routemap.tmpl")))
+	rf, e := os.OpenFile(fmt.Sprintf("%s/route/route.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
+	if e != nil {
+		fmt.Println("Cannot open file , error: " + e.Error())
+		return
+	}
+
+	e = rt.Execute(rf, &data)
+	if e != nil {
+		fmt.Println("Error unable to create render template " + e.Error())
+		return
+	}
+
+}
+
+func GenerateControllers(curApp app.App, name string) {
+	fmt.Println("Generating Controller for " + name)
+	controller := Controller{
+		name,
+		inflection.Plural(name),
+		inflection.Plural(strings.ToLower(name)),
+	}
+	// Check if Controller file exists, If yes, skip.
+	f, err := os.Create("controllers/" + strings.ToLower(name) + ".go")
+	// IF no, create controller file with name and app data.
+	if err == nil {
+		tmpl := template.Must(template.New("controller").Parse(box.String("controller.tmpl")))
+		err = tmpl.Execute(f, controller)
+	}
 }

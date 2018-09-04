@@ -22,14 +22,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Get PWD
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Unable to extract current working directory.")
+		os.Exit(1)
+	}
+
 	switch os.Args[1] {
 	case "init":
-		// Get PWD
-		pwd, err := os.Getwd()
-		if err != nil {
-			fmt.Println("Unable to extract current working directory.")
-			os.Exit(1)
-		}
 
 		// Create .baana folder - Exit if already exists
 		err = os.Mkdir(fmt.Sprintf("%s/%s", pwd, METAFOLDER), 0755)
@@ -70,37 +71,64 @@ func main() {
 			os.Remove(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"))
 			os.Exit(1)
 		}
-		// Create "AppName.go" file with appropriate template
+		// Create Init set of folders and files
 		if !generators.Generate(appData) {
 			os.Exit(1)
 		}
-		// Create Models,Controllers, migrations folders
-		// create server/server.go
-		// create route/route.go
 	case "reset":
-		pwd, err := os.Getwd()
 		if err != nil {
 			fmt.Println("Unable to extract current working directory.")
 			os.Exit(1)
 		}
 		os.RemoveAll(fmt.Sprintf("%s/%s", pwd, METAFOLDER))
+	case "generate":
+		/*
+			baana generate model <name>
+				- Creates Model, Controllers and CRUD routes
+			baana generate migration <name>
+				- Create Migration file with timestamp_Name as the function name.
+			baana generate route <Type> <Controller#Action>
+				- Create route, add a function to controller for action.
+			Cannot create just controller without model as of now.
+
+			baana run
+				- Compile app based on its path.
+				- Run Migration
+				- Run Server
+		*/
+
+		if len(os.Args) < 4 {
+			fmt.Println("Invalid command use. Usage: baana generate (model|migration|controller|route) (name)")
+			os.Exit(1)
+		}
+
+		var appData app.App
+		appBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"))
+		err = json.Unmarshal(appBytes, &appData)
+		if err != nil {
+			fmt.Println("Error in reading app data " + err.Error())
+			os.Exit(1)
+		}
+
+		name := strings.Title(os.Args[3])
+
+		switch os.Args[2] {
+		case "migration":
+			generators.GenerateMigrations(name)
+		case "model":
+			fmt.Println("Generating model " + name)
+			generators.GenerateModels(appData, name)
+		case "controller":
+			generators.GenerateControllers(appData, name)
+		case "route":
+			generators.GenerateRoutes(appData, name)
+		default:
+			fmt.Println("Unknown Sub Command to generate: use one of migration|model|controller|route")
+			os.Exit(1)
+		}
 	default:
-		fmt.Println("Unknown Command")
+		fmt.Println("Unknown Command. Use one of init|reset|generate")
 		os.Exit(1)
 	}
 
-	/*
-		baana generate model <name>
-			- Creates Model, Controllers and CRUD routes
-		baana generate migration <name>
-			- Create Migration file with timestamp_Name as the function name.
-		baana generate route <Type> <Controller#Action>
-			- Create route, add a function to controller for action.
-		Cannot create just controller without model as of now.
-
-		baana run
-			- Compile app based on its path.
-			- Run Migration
-			- Run Server
-	*/
 }

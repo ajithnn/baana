@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"{{ .ImportPath }}/models"
 	"github.com/jinzhu/gorm"
 	"gitlab.com/ajithnn/baana/migrator"
 	"fmt"
@@ -12,10 +13,10 @@ func Migrate(db *gorm.DB, version , mode string) {
 
    m := migrate{}
 
+   db.AutoMigrate(&models.Migration{})
    err := migrator.Migrate(db,version,mode,m)
    if err != nil {
    	fmt.Println("Error in migration: " + err.Error())
    }
 }
-
 

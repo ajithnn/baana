@@ -3,17 +3,17 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"github.com/amagimedia/baana"
+	"github.com/amagimedia/baana/service"
 )
 
 type {{ .Name }}Controller struct {
 	*models.{{ .Name }}
 	db *gorm.DB
-	*baana.Query
+	*service.Query
 }
 
-func {{ .Name }}(db *gorm.DB) baana.Controller {
-	handle := &{{ .Name }}Controller{&models.{{ .Name }}{}, db, &baana.Query{}}
+func {{ .Name }}(db *gorm.DB) interface{} {
+	handle := &{{ .Name }}Controller{&models.{{ .Name }}{}, db, &service.Query{}}
 	return handle
 }
 

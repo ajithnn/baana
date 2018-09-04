@@ -67,10 +67,12 @@ func (r *Service) LoadRoutes(eng gin.IRoutes, routes []byte) {
 		panic(err)
 	}
 	// For each route, Call Route to Handler with correct string
-	for route, runner := range routeMap {
-		rsplit := strings.Split(runner, " ")
+	for rt, runner := range routeMap {
+		rsplit := strings.Split(rt, "#")
+		rsp := strings.Split(runner, "#")
 		method := rsplit[0]
-		controllerAction := rsplit[1]
+		route := rsplit[1]
+		controllerAction := rsp[1]
 		switch method {
 		case "GET":
 			eng.GET(route, r.RouteToHandler(controllerAction))
