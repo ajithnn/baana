@@ -15,7 +15,7 @@ import (
 
 var err error
 
-var ControllerFuncs map[string]handlerInit
+var ControllerFuncs map[string]HandlerInit
 
 type Query struct {
 	Limit  int `json:"limit" form:"limit"`
