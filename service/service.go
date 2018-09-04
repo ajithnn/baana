@@ -41,7 +41,7 @@ type configs struct {
 	Db []dbConfig `json:"db"`
 }
 
-type handlerInit func(*gorm.DB) interface{}
+type HandlerInit func(*gorm.DB) interface{}
 type ErrorFunc func(*gin.Context)
 
 func New(dbConf []byte) (*Service, error) {

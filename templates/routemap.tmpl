@@ -1,13 +1,14 @@
 package route
 
-{{ if gt (len .ControllerList) 0}}
 import (
   "gitlab.com/ajithnn/baana/service"
+{{ if gt (len .ControllerList) 0}}
   "{{ .ImportPath}}/controllers"
-)
 {{ end }}
+)
 
 func Init() {
+service.ControllerFuncs = make(map[string]service.HandlerInit)
 {{ range $index , $value := .ControllerList }}
 service.ControllerFuncs["{{ $value }}"] = controllers.{{ $value }}
 {{ end }}
