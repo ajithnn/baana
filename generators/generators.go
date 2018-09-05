@@ -262,5 +262,5 @@ func GenerateControllers(curApp app.App, name string) bool {
 		}
 		return true
 	}
-	return falsee
+	return false
 }

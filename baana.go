@@ -23,6 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	var status bool
 	// Get PWD
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -100,7 +101,6 @@ func main() {
 		}
 
 		var appData app.App
-		var status bool
 		appBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"))
 		err = json.Unmarshal(appBytes, &appData)
 		if err != nil {
