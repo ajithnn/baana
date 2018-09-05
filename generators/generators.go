@@ -64,6 +64,39 @@ func Generate(curApp app.App) bool {
 			}
 		}
 	}
+
+	// Write empty db.json file
+	dbjson := map[string]interface{}{
+		"db": []map[string]string{
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "development",
+			},
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "production",
+			},
+		},
+	}
+
+	dbjsonBytes, err := json.MarshalIndent(dbjson, "", "  ")
+	err = ioutil.WriteFile("config/db.json", dbjsonBytes, 0755)
+
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
+		return false
+	}
+
 	// create server/server.go
 	st := template.Must(template.New("server").Parse(box.String("server.tmpl")))
 	sf, er := os.OpenFile(fmt.Sprintf("%s/server/server.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
