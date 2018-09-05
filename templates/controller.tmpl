@@ -28,7 +28,7 @@ func {{ .Name }}(db *gorm.DB) interface{} {
 // - application/json
 // parameters:
 // responses:
-func (e *{{ .Name }}Controller) Create(c *gin.Context) {
+func (handler *{{ .Name }}Controller) Create(c *gin.Context) {
 }
 
 // swagger:operation PUT /{{ .Endpoint }}/{id} update{{ .Name }}
@@ -41,7 +41,7 @@ func (e *{{ .Name }}Controller) Create(c *gin.Context) {
 // - application/json
 // parameters:
 // responses:
-func (e *{{ .Name }}Controller) Update(c *gin.Context) {
+func (handler *{{ .Name }}Controller) Update(c *gin.Context) {
 }
 
 // swagger:operation GET /{{ .Endpoint }}/ get{{ .PluralName }}
@@ -54,7 +54,7 @@ func (e *{{ .Name }}Controller) Update(c *gin.Context) {
 // - application/json
 // parameters:
 // responses:
-func (e *{{ .Name }}Controller) Read(c *gin.Context) {
+func (handler *{{ .Name }}Controller) Read(c *gin.Context) {
 }
 
 // swagger:operation DELETE /{{ .Endpoint }}/{id} delete{{ .Name }}
@@ -67,6 +67,6 @@ func (e *{{ .Name }}Controller) Read(c *gin.Context) {
 // - application/json
 // parameters:
 // responses:
-func (e *{{ .Name }}Controller) Delete(c *gin.Context) {
+func (handler *{{ .Name }}Controller) Delete(c *gin.Context) {
 }
 

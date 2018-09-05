@@ -14,8 +14,10 @@ import (
 )
 
 var err error
-
 var ControllerFuncs map[string]HandlerInit
+
+type HandlerInit func(*gorm.DB) interface{}
+type ErrorFunc func(*gin.Context)
 
 type Query struct {
 	Limit  int `json:"limit" form:"limit"`
@@ -40,9 +42,6 @@ type dbConfig struct {
 type configs struct {
 	Db []dbConfig `json:"db"`
 }
-
-type HandlerInit func(*gorm.DB) interface{}
-type ErrorFunc func(*gin.Context)
 
 func New(dbConf []byte) (*Service, error) {
 	var conf configs
@@ -92,7 +91,7 @@ func (r *Service) LoadRoutes(eng gin.IRoutes, routes []byte) {
 	}
 }
 
-func (r *Service) Close() {
+func (r *Service) Terminate() {
 	r.DB.Close()
 }
 

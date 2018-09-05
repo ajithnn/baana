@@ -19,6 +19,7 @@ func main() {
 		fmt.Println("Incorrect command, usage: baana <command> <options>")
 		fmt.Println("          baana init  <app_name>")
 		fmt.Println("          baana reset <app_name>")
+		fmt.Println("          baana generate model|controller|migration <name>")
 		os.Exit(1)
 	}
 
@@ -85,16 +86,12 @@ func main() {
 		/*
 			baana generate model <name>
 				- Creates Model, Controllers and CRUD routes
+			baana generate controller <name>
+				- Create Migration file with timestamp_Name as the function name.
 			baana generate migration <name>
 				- Create Migration file with timestamp_Name as the function name.
-			baana generate route <Type> <Controller#Action>
-				- Create route, add a function to controller for action.
-			Cannot create just controller without model as of now.
+			To Create a independent route edit config/routes.json directly.
 
-			baana run
-				- Compile app based on its path.
-				- Run Migration
-				- Run Server
 		*/
 
 		if len(os.Args) < 4 {
@@ -103,6 +100,7 @@ func main() {
 		}
 
 		var appData app.App
+		var status bool
 		appBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"))
 		err = json.Unmarshal(appBytes, &appData)
 		if err != nil {
@@ -114,20 +112,20 @@ func main() {
 
 		switch os.Args[2] {
 		case "migration":
-			generators.GenerateMigrations(name)
+			status = generators.GenerateMigrations(name)
 		case "model":
-			fmt.Println("Generating model " + name)
-			generators.GenerateModels(appData, name)
+			status = generators.GenerateModels(appData, name)
 		case "controller":
-			generators.GenerateControllers(appData, name)
-		case "route":
-			generators.GenerateRoutes(appData, name)
+			status = generators.GenerateControllers(appData, name)
 		default:
 			fmt.Println("Unknown Sub Command to generate: use one of migration|model|controller|route")
 			os.Exit(1)
 		}
 	default:
 		fmt.Println("Unknown Command. Use one of init|reset|generate")
+		os.Exit(1)
+	}
+	if !status {
 		os.Exit(1)
 	}
 

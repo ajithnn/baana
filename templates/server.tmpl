@@ -29,13 +29,15 @@ func Run(svc *bsvc.Service) {
 
   defer svc.Close()
 
+  // Reading routes.json  to generate routes for Gin
   routes, err := ioutil.ReadFile("config/routes.json")
   if err != nil {
     panic("Invalid route/ no routes.json  found.")
     os.Exit(1)
   }
 
-  gin.SetMode(gin.ReleaseMode)
+  // Uncomment when releasing to production.
+  //gin.SetMode(gin.ReleaseMode)
 
   r := gin.Default()
 

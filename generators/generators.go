@@ -120,7 +120,7 @@ func Generate(curApp app.App) bool {
 	return true
 }
 
-func GenerateMigrations(name string) {
+func GenerateMigrations(name string) bool {
 	var tpl bytes.Buffer
 	ts := time.Now().UTC().Format("20060102150405")
 	funcName := struct {
@@ -131,16 +131,19 @@ func GenerateMigrations(name string) {
 	err := tmpl.Execute(&tpl, funcName)
 	f, err := os.OpenFile("migrations/migration.go", os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		return
+		fmt.Println("Error: " + err.Error())
+		return false
 	}
 	defer f.Close()
 	if _, err = f.WriteString(tpl.String()); err != nil {
-		return
+		fmt.Println("Error: " + err.Error())
+		return false
 	}
 	fmt.Println("Generated func in migrations/migration.go")
+	return true
 }
 
-func GenerateModels(curApp app.App, name string) {
+func GenerateModels(curApp app.App, name string) bool {
 	var tpl bytes.Buffer
 	// Create Model file by passing the name
 	m := Model{
@@ -152,23 +155,26 @@ func GenerateModels(curApp app.App, name string) {
 	err := tmpl.Execute(&tpl, m)
 	f, err := os.OpenFile("models/"+strings.ToLower(name)+".go", os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
-		panic(err)
-		return
+		fmt.Println("Error: " + err.Error())
+		return false
 	}
 	defer f.Close()
 	if _, err = f.WriteString(tpl.String()); err != nil {
-		panic(err)
-		return
+		fmt.Println("Error: " + err.Error())
+		return false
 	}
 	// Check if Controller file exists, If yes, skip.
 	// IF no, create controller file with name and app data.
-	GenerateControllers(curApp, name)
+	val := GenerateControllers(curApp, name)
+	if !val {
+		return val
+	}
 	// Load routes.json file and add
 	// Create,Read,Update, Delete to routes.
-	GenerateRoutes(curApp, name)
+	return GenerateRoutes(curApp, name)
 }
 
-func GenerateRoutes(curApp app.App, name string) {
+func GenerateRoutes(curApp app.App, name string) bool {
 	fmt.Println("Generating Routes for " + name)
 	var curRoutes = make(map[string]string)
 	action := map[string]string{
@@ -181,12 +187,12 @@ func GenerateRoutes(curApp app.App, name string) {
 	c, err := ioutil.ReadFile("config/routes.json")
 	if err != nil {
 		fmt.Println("Error in reading routes.json, error: " + err.Error())
-		return
+		return false
 	}
 	err = json.Unmarshal(c, &curRoutes)
 	if err != nil {
 		fmt.Println("Error in reading routes.json, error: " + err.Error())
-		return
+		return false
 	}
 
 	paths := []string{
@@ -224,18 +230,20 @@ func GenerateRoutes(curApp app.App, name string) {
 	rf, e := os.OpenFile(fmt.Sprintf("%s/route/route.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
 	if e != nil {
 		fmt.Println("Cannot open file , error: " + e.Error())
-		return
+		return false
 	}
 
 	e = rt.Execute(rf, &data)
 	if e != nil {
 		fmt.Println("Error unable to create render template " + e.Error())
-		return
+		return false
 	}
+
+	return true
 
 }
 
-func GenerateControllers(curApp app.App, name string) {
+func GenerateControllers(curApp app.App, name string) bool {
 	fmt.Println("Generating Controller for " + name)
 	controller := Controller{
 		name,
@@ -248,5 +256,11 @@ func GenerateControllers(curApp app.App, name string) {
 	if err == nil {
 		tmpl := template.Must(template.New("controller").Parse(box.String("controller.tmpl")))
 		err = tmpl.Execute(f, controller)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+			return false
+		}
+		return true
 	}
+	return falsee
 }
