@@ -29,6 +29,7 @@ type Controller struct {
 	Name       string
 	PluralName string
 	Endpoint   string
+	ImportPath string
 }
 
 var box = packr.NewBox("../templates/")
@@ -197,7 +198,7 @@ func GenerateRoutes(curApp app.App, name string) bool {
 
 	paths := []string{
 		fmt.Sprintf("/%s/ POST", inflection.Plural(strings.ToLower(name))),
-		fmt.Sprintf("/%s/{id} PUT", inflection.Plural(strings.ToLower(name))),
+		fmt.Sprintf("/%s/:id PUT", inflection.Plural(strings.ToLower(name))),
 		fmt.Sprintf("/%s/*id GET", inflection.Plural(strings.ToLower(name))),
 		fmt.Sprintf("/%s/*id DELETE", inflection.Plural(strings.ToLower(name))),
 	}
@@ -249,6 +250,7 @@ func GenerateControllers(curApp app.App, name string) bool {
 		name,
 		inflection.Plural(name),
 		inflection.Plural(strings.ToLower(name)),
+		curApp.ImportPath,
 	}
 	// Check if Controller file exists, If yes, skip.
 	f, err := os.Create("controllers/" + strings.ToLower(name) + ".go")
