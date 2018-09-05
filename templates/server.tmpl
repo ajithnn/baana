@@ -27,7 +27,7 @@ import (
 
 func Run(svc *bsvc.Service) {
 
-  defer svc.Close()
+  defer svc.Terminate()
 
   // Reading routes.json  to generate routes for Gin
   routes, err := ioutil.ReadFile("config/routes.json")
