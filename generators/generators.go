@@ -91,6 +91,7 @@ func Generate(curApp app.App) bool {
 
 	dbjsonBytes, err := json.MarshalIndent(dbjson, "", "  ")
 	err = ioutil.WriteFile("config/db.json", dbjsonBytes, 0755)
+	err = ioutil.WriteFile("config/routes.json", []byte("{}"), 0755)
 
 	if err != nil {
 		fmt.Println("Error: " + err.Error())
