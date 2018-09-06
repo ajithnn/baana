@@ -97,7 +97,7 @@ func (r *Service) Terminate() {
 
 func (r *Service) RouteToHandler(handlerAction string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tx := r.DB.Begin()
+		tx := r.DB
 		callDetails := strings.Split(handlerAction, "#")
 		if _, ok := ControllerFuncs[callDetails[0]]; ok {
 			funcToCall := reflect.ValueOf(ControllerFuncs[callDetails[0]])
@@ -123,10 +123,10 @@ func (r *Service) callAction(action string, result reflect.Value, c *gin.Context
 			caller.Call(in)
 			if c.Errors != nil && len(c.Errors) > 0 {
 				r.SetError(c)
-				tx.Rollback()
+				//tx.Rollback()
 				return
 			}
-			tx.Commit()
+			//tx.Commit()
 			return
 		}
 	}
@@ -134,7 +134,7 @@ func (r *Service) callAction(action string, result reflect.Value, c *gin.Context
 }
 
 func (r *Service) NotFound(c *gin.Context, tx *gorm.DB) {
-	tx.Rollback()
+	//tx.Rollback()
 	c.JSON(404, gin.H{"error": "Not found"})
 	return
 }
