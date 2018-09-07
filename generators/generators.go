@@ -34,122 +34,40 @@ type Controller struct {
 
 var box = packr.NewBox("../templates/")
 
-func Generate(curApp app.App) bool {
-	// Create <app_name>.go using the tempalte
-	t := template.Must(template.New("app").Parse(box.String("app.tmpl")))
-	f, err := os.OpenFile(fmt.Sprintf("%s/%s.go", curApp.Path, curApp.Name), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Cannot open file , error: " + err.Error())
-		return false
-	}
-	err = t.Execute(f, curApp)
-	if err != nil {
-		fmt.Println("Error unable to create render template " + err.Error())
-		return false
-	}
+func Init(curApp app.App) bool {
 
-	errs := make([]error, 0)
-	// Create Models,Controllers, migrations folders
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "models"), 0755))
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "controllers"), 0755))
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "migrations"), 0755))
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "server"), 0755))
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "route"), 0755))
-	errs = append(errs, os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, "config"), 0755))
-	if len(errs) != 0 {
-		for _, e := range errs {
-			if e != nil {
-				fmt.Println("Folder create errors " + e.Error())
-				return false
-			}
+	var err error
+
+	// Create folders
+	folders := []string{"models", "controllers", "migrations", "server", "route", "config"}
+	for _, folder := range folders {
+		err = os.Mkdir(fmt.Sprintf("%s/%s", curApp.Path, folder), 0755)
+		if err != nil {
+			fmt.Println("Folder create error " + err.Error())
+			return false
 		}
 	}
 
-	// Write empty db.json file
-	dbjson := map[string]interface{}{
-		"db": []map[string]string{
-			{
-				"user":     "",
-				"password": "",
-				"host":     "",
-				"port":     "",
-				"db":       "",
-				"type":     "",
-				"env":      "development",
-			},
-			{
-				"user":     "",
-				"password": "",
-				"host":     "",
-				"port":     "",
-				"db":       "",
-				"type":     "",
-				"env":      "production",
-			},
-		},
-	}
-
-	dbjsonBytes, err := json.MarshalIndent(dbjson, "", "  ")
-	err = ioutil.WriteFile("config/db.json", dbjsonBytes, 0755)
-	err = ioutil.WriteFile("config/routes.json", []byte("{}"), 0755)
-
+	// Create Config Files
+	err = createConfigFiles()
 	if err != nil {
 		fmt.Println("Error: " + err.Error())
 		return false
 	}
 
-	// create server/server.go
-	st := template.Must(template.New("server").Parse(box.String("server.tmpl")))
-	sf, er := os.OpenFile(fmt.Sprintf("%s/server/server.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
-	if er != nil {
-		fmt.Println("Cannot open file , error: " + er.Error())
-		return false
-	}
-	er = st.Execute(sf, curApp)
-	if er != nil {
-		fmt.Println("Error unable to create render template " + er.Error())
-		return false
-	}
-	// create route/route.go
-	rt := template.Must(template.New("route").Parse(box.String("routemap.tmpl")))
-	rf, e := os.OpenFile(fmt.Sprintf("%s/route/route.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
-	if e != nil {
-		fmt.Println("Cannot open file , error: " + e.Error())
-		return false
-	}
-	data := routeMap{
-		[]string{},
-		curApp.ImportPath,
-	}
-	e = rt.Execute(rf, &data)
-	if e != nil {
-		fmt.Println("Error unable to create render template " + e.Error())
-		return false
-	}
-	// create migrations/migration.go
-	t = template.Must(template.New("base_migration").Parse(box.String("base_migration.tmpl")))
-	f, err = os.OpenFile(fmt.Sprintf("%s/migrations/migration.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Cannot open file , error: " + err.Error())
-		return false
-	}
-	err = t.Execute(f, &curApp)
-	if err != nil {
-		fmt.Println("Error unable to create render template " + err.Error())
-		return false
+	// Create Go Code Files
+	codeFiles := [][]string{
+		{"server.tmpl", "server/server.go"}, {"base_migration.tmpl", "migrations/migration.go"},
+		{"migrate_model.tmpl", "models/migration.go"}, {"routemap.tmpl", "route/route.go"},
+		{"app.tmpl", "app.go"},
 	}
 
-	// create models/migration.go
-	t = template.Must(template.New("model_migration").Parse(box.String("migrate_model.tmpl")))
-	f, err = os.OpenFile(fmt.Sprintf("%s/models/migration.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Cannot open file , error: " + err.Error())
-		return false
-	}
-	err = t.Execute(f, &curApp)
-	if err != nil {
-		fmt.Println("Error unable to create render template " + err.Error())
-		return false
+	for _, params := range codeFiles {
+		err = createCodeFile(params[0], params[1], curApp)
+		if err != nil {
+			fmt.Println("Failed to create " + params[1])
+			return false
+		}
 	}
 
 	return true
@@ -256,10 +174,7 @@ func GenerateRoutes(curApp app.App, name string) bool {
 		controllerNames = append(controllerNames, names)
 	}
 
-	data := routeMap{
-		controllerNames,
-		curApp.ImportPath,
-	}
+	curApp.ControllerList = controllerNames
 
 	rt := template.Must(template.New("route").Parse(box.String("routemap.tmpl")))
 	rf, e := os.OpenFile(fmt.Sprintf("%s/route/route.go", curApp.Path), os.O_RDWR|os.O_CREATE, 0755)
@@ -268,7 +183,7 @@ func GenerateRoutes(curApp app.App, name string) bool {
 		return false
 	}
 
-	e = rt.Execute(rf, &data)
+	e = rt.Execute(rf, &curApp)
 	if e != nil {
 		fmt.Println("Error unable to create render template " + e.Error())
 		return false
@@ -299,4 +214,65 @@ func GenerateControllers(curApp app.App, name string) bool {
 		return true
 	}
 	return false
+}
+
+func createConfigFiles() error {
+	dbjson := map[string]interface{}{
+		"db": []map[string]string{
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "development",
+			},
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "test",
+			},
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "staging",
+			},
+			{
+				"user":     "",
+				"password": "",
+				"host":     "",
+				"port":     "",
+				"db":       "",
+				"type":     "",
+				"env":      "production",
+			},
+		},
+	}
+
+	dbjsonBytes, err := json.MarshalIndent(dbjson, "", "  ")
+	err = ioutil.WriteFile("config/db.json", dbjsonBytes, 0755)
+	err = ioutil.WriteFile("config/routes.json", []byte("{}"), 0755)
+	return err
+}
+
+func createCodeFile(tmplName, codePath string, curApp app.App) error {
+	tmpl := template.Must(template.New(tmplName).Parse(box.String(tmplName)))
+	file, err := os.OpenFile(fmt.Sprintf("%s/%s", curApp.Path, codePath), os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+	err = tmpl.Execute(file, curApp)
+	if err != nil {
+		return err
+	}
+	return nil
 }

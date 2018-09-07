@@ -62,9 +62,10 @@ func main() {
 			TODO: Add fields as required
 		*/
 		appData := app.App{
-			Name:       os.Args[2],
-			Path:       pwd,
-			ImportPath: importPath,
+			Name:           os.Args[2],
+			Path:           pwd,
+			ImportPath:     importPath,
+			ControllerList: []string{},
 		}
 		appString, _ := json.MarshalIndent(&appData, "", "  ")
 		err = ioutil.WriteFile(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"), appString, 0644)
@@ -73,8 +74,9 @@ func main() {
 			os.Remove(fmt.Sprintf("%s/%s/%s", pwd, METAFOLDER, "app.json"))
 			os.Exit(1)
 		}
+
 		// Create Init set of folders and files
-		if !generators.Generate(appData) {
+		if !generators.Init(appData) {
 			os.Exit(1)
 		}
 	case "reset":

@@ -5,13 +5,22 @@ import (
 	"github.com/jinzhu/gorm"
 	"gitlab.com/ajithnn/baana/migrator"
 	"fmt"
+	"strings"
 )
 
 type migrate struct {}
 
-func Migrate(db *gorm.DB, version , mode string) {
+func Migrate(db *gorm.DB, mode string) {
 
    m := migrate{}
+
+   splitMode := strings.Split(mode,":")
+   version := ""
+   mode = splitMode[0]
+
+   if len(splitMode) == 2 {
+   	version = splitMode[1]
+   } 
 
    db.AutoMigrate(&models.Migration{})
    err := migrator.Migrate(db,version,mode,&m)

@@ -98,6 +98,7 @@ func (r *Service) Terminate() {
 func (r *Service) RouteToHandler(handlerAction string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tx := r.DB
+		c.Set("controller_action", handlerAction)
 		callDetails := strings.Split(handlerAction, "#")
 		if _, ok := ControllerFuncs[callDetails[0]]; ok {
 			funcToCall := reflect.ValueOf(ControllerFuncs[callDetails[0]])
@@ -135,7 +136,11 @@ func (r *Service) callAction(action string, result reflect.Value, c *gin.Context
 
 func (r *Service) NotFound(c *gin.Context, tx *gorm.DB) {
 	//tx.Rollback()
-	c.JSON(404, gin.H{"error": "Not found"})
+	controllerAction := "NotKnown"
+	if val, ok := c.Get("controller_action"); ok {
+		controllerAction = val.(string)
+	}
+	c.JSON(404, gin.H{"error": "Invalid Controller#Action " + controllerAction + " , Not found."})
 	return
 }
 
@@ -152,6 +157,9 @@ func getConfigByEnv(cfg configs) (dbConfig, error) {
 func getDB(user, pwd, host, port, dbName, dbType string) *gorm.DB {
 	var db *gorm.DB
 	var err error
+	if user == "" || pwd == "" || port == "" || dbName == "" || dbType == "" {
+		panic("Invalid DB credentials,None of the parameters can be empty.")
+	}
 	switch dbType {
 	case "mysql":
 		db, err = gorm.Open(dbType, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", user, pwd, host, port, dbName))
