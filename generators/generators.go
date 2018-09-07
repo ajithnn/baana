@@ -59,7 +59,7 @@ func Init(curApp app.App) bool {
 	codeFiles := [][]string{
 		{"server.tmpl", "server/server.go"}, {"base_migration.tmpl", "migrations/migration.go"},
 		{"migrate_model.tmpl", "models/migration.go"}, {"routemap.tmpl", "route/route.go"},
-		{"app.tmpl", "app.go"},
+		{"app.tmpl", curApp.Name + ".go"},
 	}
 
 	for _, params := range codeFiles {
